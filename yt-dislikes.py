@@ -19,6 +19,7 @@ SEARCH_TERMS = os.getenv('SEARCH_TERMS')
 
 scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 
+
 def main():
     # Disable OAuthlib's HTTPS verification when running locally.
     # *DO NOT* leave this option enabled in production.
@@ -35,7 +36,7 @@ def main():
     youtube = googleapiclient.discovery.build(
         api_service_name, api_version, credentials=credentials)
 
-    ### Get videoId list
+    # Get videoId list
     requestVidId = youtube.search().list(
         part="snippet",
         channelId=CHANNEL_ID,
@@ -49,7 +50,7 @@ def main():
 
             vidId = item['id']['videoId']
 
-            ### Get statistics
+            # Get statistics
             requestStats = youtube.videos().list(
                 part="statistics",
                 id=vidId
@@ -61,7 +62,7 @@ def main():
                 views = item['statistics']['viewCount']
                 likes = item['statistics']['likeCount']
                 dislikes = item['statistics']['dislikeCount']
-        
+
             if (float(likes) + float(dislikes)) == 0:
                 ratio = 0
             else:
@@ -69,9 +70,10 @@ def main():
             today = date.today()
             currentDate = today.strftime("%b-%d-%Y")
 
-            textOriginal = ("This is an automated comment to display likes & dislikes for the video you're currently watching, since YouTube decided to disable the dislike count on videos. \nViews: " + views + "\nLikes: " + likes + "\nDislikes: " + dislikes + "\nRatio: " + str(round(ratio, 1)) + "%" + "\nLast Updated: " + currentDate + "\nYouTube, please don't ban or shadowban me. I learned how to do this from your own docs. \nLol thanks.")
+            textOriginal = ("This is an automated comment to display likes & dislikes for the video you're currently watching, since YouTube decided to disable the dislike count on videos. \nViews: " + views + "\nLikes: " + likes +
+                            "\nDislikes: " + dislikes + "\nRatio: " + str(round(ratio, 1)) + "%" + "\nLast Updated: " + currentDate + "\nYouTube, please don't ban or shadowban me. I learned how to do this from your own docs. \nLol thanks.")
 
-            ### Get my stat comment
+            # Get my stat comment
             requestCommentId = youtube.commentThreads().list(
                 part="snippet",
                 moderationStatus="published",
@@ -81,7 +83,7 @@ def main():
             )
             responseCommentId = requestCommentId.execute()
 
-            ### Create or update stat comment
+            # Create or update stat comment
             if responseCommentId["items"]:
                 for item in responseCommentId['items']:
                     commentId = item['id']
@@ -90,8 +92,8 @@ def main():
                         part="snippet",
                         body={
                             "id": commentId,
-                                "snippet": {
-                                    "textOriginal": textOriginal
+                            "snippet": {
+                                "textOriginal": textOriginal
                             }
                         }
                     )
@@ -102,15 +104,15 @@ def main():
                 requestComment = youtube.commentThreads().insert(
                     part="snippet",
                     body={
-                    "snippet": {
-                        "topLevelComment": {
                         "snippet": {
-                            "textOriginal": textOriginal
+                            "topLevelComment": {
+                                "snippet": {
+                                    "textOriginal": textOriginal
+                                }
+                            },
+                            "channelId": CHANNEL_ID,
+                            "videoId": vidId
                         }
-                        },
-                        "channelId": CHANNEL_ID,
-                        "videoId": vidId
-                    }
                     }
                 )
                 responseComment = requestComment.execute()
@@ -129,6 +131,7 @@ def main():
                 break
         except:
             break
-                
+
+
 if __name__ == "__main__":
     main()
